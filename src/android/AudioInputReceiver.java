@@ -81,35 +81,40 @@ public class AudioInputReceiver extends Thread {
         short audioBuffer[] = new short[readBufferSize];
 
         synchronized(this) {
-            recorder.startRecording();
 
-            while (!isInterrupted()) {
-                numReadBytes = recorder.read(audioBuffer, 0, readBufferSize);
+            try {
 
-                if (numReadBytes > 0) {
-                    try {
-                        String decoded = Arrays.toString(audioBuffer);
+                recorder.startRecording();
 
-                        message = handler.obtainMessage();
-                        messageBundle.putString("data", decoded);
-                        message.setData(messageBundle);
-                        handler.sendMessage(message);
-                    }
-                    catch(Exception ex) {
-                        message = handler.obtainMessage();
-                        messageBundle.putString("error", ex.toString());
-                        message.setData(messageBundle);
-                        handler.sendMessage(message);
+                while (!isInterrupted()) {
+                    numReadBytes = recorder.read(audioBuffer, 0, readBufferSize);
+
+                    if (numReadBytes > 0) {
+                        try {
+                            String decoded = Arrays.toString(audioBuffer);
+
+                            message = handler.obtainMessage();
+                            messageBundle.putString("data", decoded);
+                            message.setData(messageBundle);
+                            handler.sendMessage(message);
+                        }
+                        catch(Exception ex) {
+                            message = handler.obtainMessage();
+                            messageBundle.putString("error", ex.toString());
+                            message.setData(messageBundle);
+                            handler.sendMessage(message);
+                        }
                     }
                 }
-            }
 
-            if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-                recorder.stop();
-            }
+                if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                    recorder.stop();
+                }
 
-            recorder.release();
-            recorder = null;
+            } finally {
+                recorder.release();
+                recorder = null;
+            }
         }
     }
 }
